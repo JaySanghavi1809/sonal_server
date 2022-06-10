@@ -1,0 +1,79 @@
+<html>
+
+<head>
+    <title>Email</title>
+    <style type="text/css">
+        @font-face {
+            font-family: 'Roboto';
+            src: url('assets/font/Roboto-Regular.woff2') format('woff2'),
+                url('assets/font/Roboto-Regular.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        .combat-matrix-temp-page {
+            display: flex;
+            align-items: center;
+            height: 100%;
+
+        }
+
+        .main-container {
+            min-width: 600px;
+            max-width: 600px;
+            color: #FFFFFF;
+            margin: 0 auto;
+            padding: 26.8px;
+            height: auto;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .button-sec {
+            padding: 7px 50px;
+            background: transparent linear-gradient(90deg, #75DBDF 0%, #059298 100%) 0% 0% no-repeat padding-box;
+            border: 3px solid #40BFC5;
+            border-radius: 6px;
+        }
+
+        .regards-start {
+            margin: 0;
+        }
+
+        .regards-end {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="combat-matrix-temp-page">
+        <div class="main-container">
+            <div class="header" style="background-color: #272A2E; padding: 26px;">
+                <div class="combat-logo-sec">
+                    <a href="#"><img src="{{LOGO}}" style="width: 134px; height: 40px;"></a>
+                </div>
+            </div>
+            <div class="combat-contant-sec" style="padding: 0 30px;">
+                <h1 class=" comabat-heading"
+                    style="color: #272A2E; font-size: 20px; line-height: 26px;margin: 33px 0 0; font-family: 'Roboto';">
+                    Verify your email address</h1>
+                <hr / style="width: 15px; margin-bottom: 46px; font-family: 'Roboto';">
+                <p class="content-sec"
+                    style="color: #272A2E; font-size: 15px; text-align: left;  margin: 25px 0 ;font-family: 'Roboto';">
+                    Please verify your email by entering the one time password: <strong>{{OTP}}</strong></p>
+                <p class="regards-start"
+                    style="color: #272A2E; font-size: 14px;  text-align: left; font-family: 'Roboto';">All the best,</p>
+                <p class="regards-end"
+                    style="color: #272A2E; font-size: 14px;  text-align: left; font-family: 'Roboto';">Sonar Media</p>
+                <a href="{{URL}}" class="button-sec" style="font-size: 16px;  text-decoration: none;
+                color: #231F20; font-family: 'Roboto'; font-weight: bold;">Confirm your account</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

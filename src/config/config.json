@@ -2,13 +2,10 @@
   "development": {
     "username": "root",
     "password": null,
-    "database": "Sonal_server",
+    "database": "sonal_server",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },
-  "PORT": "3000",
-  "JWT_SECRET": "jwt_token_secret",
-  "OTP_EXPIRE_TIME": "300",
   "test": {
     "username": "root",
     "password": null,

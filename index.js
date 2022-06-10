@@ -4,11 +4,15 @@ const config = require('./src/config/config.json')[env];
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express();
+const { HandleErrorMessage } = require('./src/middleware/validatorMessageError');
 const db = require('./src/models')
 const cors = require('cors')
- const PORT = 3000;
 
-const { userAuth } = require('./src/middleware/auth.middleware');
+
+
+const port = process.env.PORT || 8000
+
+const { userAuth } = require('./src/middleware/auth');
 
 db.sequelize.sync({ alter: true }).then(() => {
 	console.log("re-sync db.");
@@ -26,10 +30,10 @@ const { publicRouter, privateRouter } = require('./src/routes/index');
 app.use('/v1/public', publicRouter);
 app.use('/v1/private', privateRouter);
 global.config = config;
+console.log(global.config)
 
-
-app.listen(PORT, () => {
-	console.log("Server running on port" + PORT)
+app.listen(port, () => {
+	console.log("Server running on port" + port)
 })
 
 

@@ -3,6 +3,7 @@ const { Model, Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
     class UserMeta extends Model {
         static associate(models) {
+            console.log("\n\n\nmodels", models)
             UserMeta.belongsTo(models.User, { foreignKey: 'user_id' });
 
         }
@@ -47,8 +48,6 @@ module.exports = (sequelize, DataTypes) => {
             },
         }
     );
-    UserMeta.associate = function (models) {
-    }
     UserMeta.removeAttribute('id');
     return UserMeta;
 };

@@ -46,8 +46,6 @@ module.exports = (sequelize, DataTypes) => {
             },
         }
     );
-    UserChannel.associate = function (models) {
-    }
     UserChannel.removeAttribute('id');
     return UserChannel;
 };

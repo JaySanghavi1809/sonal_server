@@ -43,8 +43,5 @@ module.exports = (sequelize, DataTypes) => {
             },
         }
     );
-    TempMaster.associate = function (models) {
-
-    }
     return TempMaster;
 };

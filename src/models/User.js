@@ -3,20 +3,20 @@ const { Model, Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
     class User extends Model {
         static associate(models) {
+            console.log(models)
         }
     }
     User.init(
         {
             user_id: {
                 type: DataTypes.INTEGER,
+                primaryKey: true,
+                autoIncrement: true
             },
             first_name: {
                 type: DataTypes.STRING,
             },
             last_name: {
-                type: DataTypes.STRING,
-            },
-            email:{
                 type: DataTypes.STRING,
             },
             password: {
@@ -68,8 +68,7 @@ module.exports = (sequelize, DataTypes) => {
             },
         }
     );
-    User.associate = function (models) {
-    }
+
     User.removeAttribute('id');
     return User;
 };

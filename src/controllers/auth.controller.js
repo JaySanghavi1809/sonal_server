@@ -1,251 +1,125 @@
-const errorHelper = require("../helpers/error.helper")
-const authHelper = require("../helpers/auth.helper");
-const { User} = require("../models");
-const emailHelper = require('../helpers/email.helper');
-const utils = require('../helpers/util');
-const UserMeta = require("../models/UserMeta");
+const moment = require('moment');
+const path = require('path')
+const { User, UserMeta, UserAuth } = require('../models')
+const handlebars = require('handlebars')
+const { readHTMLFile } = require("../helpers/common")
+const { encrypt, generateOtp, comparePassword } = require("../helpers/utils")
+const { EMAILCONSTANT } = require("../helpers/constant")
+const { sendMail } = require("../helpers/email.helper")
+const { generateToken } = require("../helpers/auth.token");
 
-exports.register = async (req, res, next) => {
+
+
+//User Signup:-
+exports.register = async (req, res) => {
+    try {
+        var body = req.body
+        console.log(body)
+
+        if (!body) {
+            return res.status(400).json({ status: false, message: 'Body data error' })
+        }
+        //check email address valid or not:
+        var checkExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
+        if (checkExists) {
+            var UserAuthInfo = await UserAuth.findOne({ where: { user_id: checkExists.user_id } })
+        }
+        if (UserAuthInfo) {
+            return res.status(400).send({ status: false, message: "Email is Already Exists try to login" })
+        }
+
+        var otp = generateOtp(6);
+
+        //Create new User:
+        var CreateUser = {
+            first_name: body.firstName,
+            last_name: body.lastName,
+            password: encrypt(body.password),
+            otp: otp,
+            otp_exp_time: moment(new Date()).add(process.env.OTP_EXPIRE_TIME, 'seconds').format('YYYY-MM-DD HH:mm:ss')
+        }
+
+        let UserInfo = await User.create(CreateUser)
+        if (!UserInfo) {
+            return res.status(400).send({ status: false, message: "Something went wrong, could't create User" })
+
+        }
+
+        var UserMetaCreate = {
+            user_id: UserInfo.user_id,
+            type: 'email',
+            data: body.email
+        }
+
+        let UserMetaInfo = await UserMeta.create(UserMetaCreate)
+
+        let templateData = {
+            LOGO: process.env.EMAIL_BASE_URL + EMAILCONSTANT.IMAGES.logo,
+            URL: process.env.EMAIL_BASE_URL + EMAILCONSTANT.WELCOME_VERIFIED.url
+        }
+        readHTMLFile(path.join(__dirname, `../emailTemplates/${EMAILCONSTANT.SIGNUP_OTP.template}.html`), async function (err, html) {
+            try {
+                const compiledTemplate = handlebars.compile(html);
+                const htmlToSend = compiledTemplate(templateData);
+                const subject = EMAILCONSTANT.SIGNUP_OTP.subject;
+                const to = body.email;
+                sendMail(to, subject, htmlToSend)
+            } catch (e) {
+                console.log("error", e)
+            }
+        })
+
+        return res.status(200).send({ status: true, message: "user create successfully mail sent" })
+
+    } catch (e) {
+        console.log('error', e);
+        return res.send({ status: false, message: e.message })
+    }
+}
+// Login 
+exports.login = async (req, res) => {
     try {
         let body = req.body;
         console.log(body)
 
-        let otp = utils.genrateCode();
-        body.otpCode = otp;
-        body.optExpirationTime = utils.getCurrentTime();
-        let checkExists = await User.findOne({ where: { email: body.email } });
-
-        if (checkExists && checkExists !== null && checkExists !== '' && checkExists !== undefined) {
-            return res.status(201).json({ success: false, message: "USER_EXIST" })
-        } else {
-            let user = await User.create(body);
-            console.log(user)
-
-            emailHelper.sendEmail(user.email, VERIFY_SUBJECT, emailHelper.varifyTemplate(otp, user.email));
-
-            //emailHelper.sendEmail(user.email, "Welcome to motzza", emailHelper.welcomeTempalte(user.fullname))
-            return res.status(200).json({ success: true, message: "REGISTRATION_MESSAGE" })
+        let checkExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
+        if (!checkExists) {
+            return res.status(400).send({ status: false, message: "Not Found" })
         }
 
-    } catch (error) {
-        console.log("Error : ", error)
-        next(errorHelper.AppEror(error.message))
-    }
-
-}
-exports.login = async (req, res, next) => {
-    try {
-        let result = await authHelper.getToken(req, res, next)
-        console.log(result.getToken)
-        res.send(result)
-
-    } catch (error) {
-        console.log("", error)
-        next(error)
-    }
-}
-
-exports.token = async (req, res, next) => {
-    try {
-
-        await authHelper.getRefreshToken(req, res, next)
-
-
-    } catch (error) {
-        console.log("", error)
-        next(error)
-    }
-}
-exports.forgotPassowrd = async (req, res, next) => {
-
-
-    try {
-        let email = req.params.email;
-        let users = await User.findAll({
-            where: {
-                email: email,
-            }
-        });
-        if (users && users.length > 0) {
-            let user = users[0];
-            console.log("user.createdAt", user.createdAt)
-            let secretKey = authHelper.getForgotSecret(user.password, user.createdAt);
-
-            let expireTime = process.env.EMAIL_TOKEN_LIFE || 3600000
-            console.log("secret", secretKey, user.id, expireTime)
-            let token = authHelper.createToken({ id: user.id }, user.password, expireTime);
-            console.log("token", token)
-            try {
-                let template = emailHelper.resetPasswordTemplate(user.id, token)
-                let info = await emailHelper.sendEmail(user.EMAIL, RESET_SUBJECT, template)
-                console.log(info)
-
-                res.json({ sucess: true, message: RESET_MESSAGE })
-
-            } catch (error) {
-                next(errorHelper.AppEror(error.message))
-
-            }
-
-        } else
-            next(errorHelper.NotFoud(`${email} not found`))
-
-    } catch (error) {
-        console.log("", error)
-        next(errorHelper.AppEror(error.message))
-    }
-
-
-
-}
-exports.resetPassword = async (req, res, next) => {
-
-
-    try {
-        let password = req.body.password;
-        let token = req.body.token;
-        let id = req.params.id;
-        let user = await User.findOne({
-            where: {
-                id: id
-            }
-        });
-        console.log("USer", user);
-        if (user) {
-            //res.json(users[0])
-            let secretKey = authHelper.getForgotSecret(user.password, user.createdAt);
-            let expireTime = process.env.EMAIL_TOKEN_LIFE || 3600000
-            let stoken = authHelper.createToken({ id: user.id }, secretKey, expireTime);
-
-            try {
-
-                if (true) {
-                    let result = await User.update({ password: password }, {
-                        where: {
-                            id: id,
-                            isVarify: 1
-                        },
-                        raw: true
-                    });
-                    console.log("result", result)
-                    if (result) {
-
-                        emailHelper.sendEmail(user.email, "Password successfully changed!", emailHelper.passwordChanged(password));
-                        res.json({ success: true, message: PASSWORD_RESET_MESSAGE })
-                    }
-
-
-                } else {
-                    next(errorHelper.AppEror(INVALID_TOKEN))
-                }
-
-
-
-            } catch (error) {
-                next(errorHelper.AppEror(error.message))
-
-            }
-
-        } else
-            next(errorHelper.NotFoud(`User not found`))
-
-    } catch (error) {
-        console.log("", error)
-        next(errorHelper.AppEror(error.message))
-    }
-
-
-
-}
-
-
-exports.varifyCode = async (req, res, next) => {
-    try {
-
-        let email = req.params.email;
-        let code = req.params.code;
-        if (!email || !code) throw (errorHelper.AppEror(INVALID_PAYLOAD));
-
-        let user = await User.findOne({
-            where: {
-                email: email/*,
-                otpCode: code*/
-            },
-            raw: true
-        });
-
-        if (user) {
-            if (user.isVarify == true) {
-                next(errorHelper.CustomError("User already verified", 401))
-            } else {
-                if (user.otpCode == code) {
-                    let diff;
-                    console.log("user", user);
-                    if (user.optExpirationTime) {
-                        diff = utils.getCurrentTimeDiff(user.optExpirationTime)
-                    }
-                    console.log("diff", diff, EMAIL_CODE_LIFE)
-                    if (diff <= EMAIL_CODE_LIFE) {
-                        let result = await User.update({ isVarify: true, otpCode: null }, {
-                            where: {
-                                email: email
-                            },
-                            raw: true
-                        })
-                        console.log(result);
-                        emailHelper.sendEmail(user.email, "Welcome ", emailHelper.welcomeTempalte(user.fullname))
-                        let token = await authHelper.getToken(req, res, next)
-                        res.json({ status: true, access_token: token.access_token, refresh_token: token.refresh_token })
-                    } else {
-                        next(errorHelper.CustomError("Code Expire", 424))
-                    }
-                } else {
-                    next(errorHelper.CustomError("Invalid Code", 401))
-                }
-            }
-
-        } else {
-            next(errorHelper.CustomError(EMAIL_MESSAGE, 401))
+        let UserVerify = await User.findOne({ where: { user_id: checkExists.user_id } })
+        if (!UserVerify) {
+            return res.status(400).send({ status: false, message: "User Not Found" });
+        }
+        if (UserVerify.password == null) {
+            return res.status(400).send({ status: false, message: "please enter correct password" })
         }
 
-    } catch (error) {
-        console.log("", error)
-        next(error)
+        const verifyPassword = await comparePassword(body.password, UserVerify.password)
+        if (!verifyPassword) {
+            return res.status(400).send({ status: false, message: "please enter correct password" })
+        }
+
+        const token = generateToken({ id: checkExists.user_id, email: body.email })
+
+        if (UserVerify.status !== User.Status.ACTIVE) {
+            console.log(UserVerify.status !== User.Status.ACTIVE)
+            return res.status(200).send({
+                status: false,
+                message: "something went wrong",
+                user_Verify_status: User.Status.PENDING
+            });
+        }
+        let responseObj = {
+            user_id: UserVerify.user_id,
+            email: body.email,
+            token: token,
+        }
+        return res.status(200).send({ status: true, message: "User successfullly login", data: responseObj })
+
+    } catch (e) {
+        console.log('Error', e);
+        return res.send({ status: false, message: e.message })
     }
 }
 
-exports.resendCode = async (req, res, next) => {
-    try {
-        let email = req.params.email;
-        if (!email) throw (errorHelper.AppEror(INVALID_PAYLOAD));
-
-        let user = await User.findOne({
-            where: {
-                email: email,
-            }
-        });
-        if (user) {
-            if (user.isVarify == true) {
-                next(errorHelper.CustomError("User already verified", 401))
-            } else {
-                let code = utils.genrateCode();
-                let optExpirationTime = utils.getCurrentTime();
-                let result = await User.update({ otpCode: code, optExpirationTime: optExpirationTime }, {
-                    where: {
-                        email: email
-                    },
-                    raw: true
-                })
-
-                emailHelper.sendEmail(user.email, VERIFY_SUBJECT, emailHelper.varifyTemplate(code, user.email));
-                res.json({ status: true })
-            }
-        }
-        else {
-            next(errorHelper.NotFoud());
-        }
-    } catch (error) {
-        console.log("", error)
-        next(error)
-    }
-}

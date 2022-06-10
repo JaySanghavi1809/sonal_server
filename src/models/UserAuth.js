@@ -41,8 +41,6 @@ module.exports = (sequelize, DataTypes) => {
             },
         }
     );
-    UserAuth.associate = function (models) {
-    }
     UserAuth.removeAttribute('id');
     return UserAuth;
 };
