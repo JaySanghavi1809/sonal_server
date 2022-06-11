@@ -1,10 +1,36 @@
 {
   "development": {
-    "username": "root",
-    "password": null,
-    "database": "sonal_server",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "DB": {
+      "username": "root",
+      "password": "",
+      "database": "sonal_server",
+      "host": "127.0.0.1",
+      "dialect": "mysql",
+      "queueLimit": 0,
+      "connectionLimit": 0,
+      "logging": false,
+      "port": 3306,
+      "pool": {
+        "min": 10,
+        "max": 50
+      },
+      "dialectOptions": {
+        "decimalNumbers": true,
+        "maxPreparedStatements": 100
+      }
+    },
+    "PORT": "3000",
+    "OTP_EXPIRE_TIME": "300",
+    "FROM_EMAIL": "no-reply@testing.sonarmedia.com.au",
+    "EMAIL_PASSWORD": "_ucYWeFm83",
+    "EMAIL_HOST": "chammak-challo.digiground.com.au",
+    "EMAIL_PORT": "25",
+    "IS_EMAIL_USE_SMTP": "on",
+    "ADMINISTRATOR_EMAIL": "bhakti.jnext@gmail.com",
+    "JWT_SECRET": "jwt_token_secret",
+    "JWT_EXIPIRATION_TIME": "30d",
+    "FILE_BASE_URL": "http://localhost:8000/v1/public/user/files/redirect/",
+    "EMAIL_BASE_URL": "http://localhost:8000/"
   },
   "test": {
     "username": "root",

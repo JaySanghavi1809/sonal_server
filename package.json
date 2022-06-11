@@ -4,29 +4,39 @@
   "description": "sonat media",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "node --trace-warnings index.js",
+    "devStart": "cross-env NODE_ENV=development nodemon index.js ",
+    "local": "node index.js",
+    "staging": "cross-env NODE_ENV=staging node index.js",
+    "testing": "cross-env NODE_ENV=testing node index.js",
+    "production": "cross-env NODE_ENV=production node index.js",
+    "beta": "cross-env NODE_ENV=beta node index.js"
   },
   "author": "DigiGround",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.27.2",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.20.0",
     "celebrate": "^15.0.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.0.1",
+    "download": "^8.0.0",
     "express": "^4.18.1",
     "handlebars": "^4.7.7",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.3",
     "mysql2": "^2.3.3",
+    "node-mailer": "^0.1.1",
     "nodemailer": "^6.7.5",
     "sendmail": "^1.6.1",
     "sequelize": "^6.20.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "sequelize-cli": "^6.4.1"
   }
 }

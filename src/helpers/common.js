@@ -1,4 +1,4 @@
-
+const { User, UserAuth, UserMeta } = require('../models')
 const crypto = require('crypto');
 const path = require('path')
 const fs = require('fs')
@@ -14,4 +14,6 @@ exports.readHTMLFile = function (path, cb) {
             cb(null, data);
         }
     });
+    // console.log(this.readHTMLFile)
 }
+

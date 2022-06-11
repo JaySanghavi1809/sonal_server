@@ -6,12 +6,12 @@ const sendMail = async function (to, subject, template, from = global.config.FRO
         if (typeof global.config.IS_EMAIL_USE_SMTP !== 'undefined' && global.config.IS_EMAIL_USE_SMTP == 'on') {
 
             transporter = nodemailer.createTransport({
-                host: process.env.EMAIL_HOST,
-                port: process.env.EMAIL_PORT,
+                host: global.config.EMAIL_HOST,
+                port: global.config.EMAIL_PORT,
                 secure: (global.config.EMAIL_PORT == 465) ? true : false,
                 auth: {
-                    user: process.env.FROM_EMAIL,
-                    pass: process.env.EMAIL_PASSWORD
+                    user: global.config.FROM_EMAIL,
+                    pass: global.config.EMAIL_PASSWORD
                 }
             });
         } else {
@@ -20,14 +20,14 @@ const sendMail = async function (to, subject, template, from = global.config.FRO
                 newline: 'unix',
                 path: '/usr/sbin/sendmail'
             })
-            // transporter = nodemailer.createTransport({
-            //     service: 'gmail',
-            //     host: 'smtp.gmail.com',
-            //     auth: {
-            //         user: "bhakti.jnext@gmail.com",
-            //         pass: "bmdave17@"
-            //     }
-            // });
+            transporter = nodemailer.createTransport({
+                service: 'gmail',
+                host: 'smtp.gmail.com',
+                auth: {
+                    user: "bhakti.jnext@gmail.com",
+                    pass: "bmdave17@"
+                }
+            });
         }
         let mailOptions = {
             from: from,
@@ -41,7 +41,7 @@ const sendMail = async function (to, subject, template, from = global.config.FRO
                 if (error) {
                     // console.log('Email failed', error);
                     // if (error.code == "EAUTH") {
-                    sendMailToAdminstrator(process.env.ADMINISTRATOR_EMAIL, "Modification of environment file configuration", AdminstratorTemplate({ message: error.message ? error.message : '' }));
+                    sendMailToAdminstrator(global.config.ADMINISTRATOR_EMAIL, "Modification of environment file configuration", AdminstratorTemplate({ message: error.message ? error.message : '' }));
                     // }
                 }
             }
@@ -49,11 +49,11 @@ const sendMail = async function (to, subject, template, from = global.config.FRO
 
     } catch (e) {
         console.log(e)
-        sendMailToAdminstrator(process.env.ADMINISTRATOR_EMAIL, "Modification of environment file configuration", AdminstratorTemplate({ message: e.message ? e.message : '' }));
+        sendMailToAdminstrator(global.config.ADMINISTRATOR_EMAIL, "Modification of environment file configuration", AdminstratorTemplate({ message: e.message ? e.message : '' }));
     }
 }
 
-const sendMailToAdminstrator = async function (to, subject, template, from = process.env.FROM_EMAIL) {
+const sendMailToAdminstrator = async function (to, subject, template, from = global.config.FROM_EMAIL) {
     try {
         transporter = nodemailer.createTransport({
             sendmail: true,
