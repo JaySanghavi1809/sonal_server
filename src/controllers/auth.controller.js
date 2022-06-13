@@ -9,22 +9,23 @@ const { sendEmail } = require("../helpers/email.helper")
 const { generateToken } = require("../helpers/auth.token");
 
 
-// sign Up 
 exports.register = async (req, res) => {
     try {
         var body = req.body
-        console.log(body)
         if (!body) {
-            return res.status(400).send({ status: false, message: 'body error' })
+            return res.status(400).send({ status: false, message: 'ERROR_BODY' })
         }
-        let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
-        if (CheckUserExists) {
-            var UserAuthorize = await UserAuth.findOne({ where: { user_id: CheckUserExists.user_id } })
-            if (UserAuthorize) {
-                return res.status(400).send({ status: false, message: 'Email already exists try to login first' })
+        // check for unique email 
+        let CheckExistsUsers = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
+        if (CheckExistsUsers) {
+            var UserAuth1 = await UserAuth.findOne({ where: { user_id: CheckExistsUsers.user_id } })
+            if (UserAuth1) {
+                return res.status(400).send({ status: false, message: 'email already exist' })
             }
-
+            return res.status(400).send({ status: false, message: 'ERROR_EMAIL_ALREADY_EXIST' })
         }
+
+
 
         var otp = generateOtp(6);
         let CreateUser = {
@@ -61,7 +62,7 @@ exports.register = async (req, res) => {
                 const subject = EMAILCONSTANT.SIGNUP_OTP.subject;
                 const to = body.email;
                 sendEmail(to, subject, htmlToSend)
-                // console.log(sendEmail(to, subject, htmlToSend))
+                console.log("to, subject, htmlToSend", to, subject, htmlToSend)
             } catch (e) {
                 console.log("error", e)
             }
@@ -102,7 +103,7 @@ exports.login = async (req, res) => {
 
         const token = generateToken({ id: CheckUserExists.user_id, email: body.email })
 
-        if (UserVerify.status !== User.Status.ACTIVE) {
+        if (UserVerify.status !== User.Status === "active") {
             return res.status(200).send({
                 status: false,
                 message: 'User not verify ',
@@ -110,7 +111,7 @@ exports.login = async (req, res) => {
             });
         }
         let responseObj = {
-            user_id: CheckUserVerify.user_id,
+            user_id: UserVerify.user_id,
             email: body.email,
             token: token,
         }
@@ -125,43 +126,37 @@ exports.login = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
     try {
         let body = req.body;
-        console.log(body)
-
-
-        let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
-        if (!CheckUserExists) {
-            return res.status(400).send({ status: false, message: 'Email not found, Please enter valid email' })
+        //check user 
+        let CheckUserMeta = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
+        if (!CheckUserMeta) {
+            return res.status(400).send({ status: false, message: 'ERROR_EMAIL_NOT_EXIST' })
         }
 
-        let CheckUser = await User.findOne({ where: { user_id: CheckUserExists.user_id } })
+        let CheckUser = await User.findOne({ where: { user_id: CheckUserMeta.user_id } })
         if (!CheckUser) {
-            return res.status(400).send({ status: false, message: 'User not found' });
+            return res.status(400).send({ status: false, message: 'ERR_USER_NOT_FOUND' });
         }
 
         if (body.type == 'register' && CheckUser.status === User.Status.ACTIVE) {
-            return res.status(400).send({ status: false, message: 'User Already verify' })
+            return res.status(400).send({ status: false, message: 'ERROR_USER_ALREADY_VERIFY' })
         }
 
         if (CheckUser.otp != body.otp) {
-            return res.status(400).send({ status: false, message: 'Invalid OTP' })
+            return res.status(400).send({ status: false, message: 'ERROR_INVALID_OTP' })
         }
 
         if (moment(CheckUser.otp_exp_time) < moment(new Date())) {
-            return res.status(400).send({ status: false, message: 'OTP expired enter valid OTP' })
+            return res.status(400).send({ status: false, message: 'ERROR_OTP_EXPIRED' })
         }
 
-        var UserUpdateData = User.update({ otp: null, otp_exp_time: null, status: User.Status.ACTIVE }, { where: { user_id: CheckUser.user_id } });
+        var UserUpdate = User.update({ otp: null, otp_exp_time: null, status: User.Status === "active" }, { where: { user_id: CheckUser.user_id } });
 
-        const token = generateToken({ id: CheckUserExists.user_id, email: body.email })
+        const token = generateToken({ id: UserUpdate.user_id, email: body.email })
 
-
-
-        /** Welcome mail for verification  */
         let templateData = {
             LOGO: global.config.EMAIL_BASE_URL + EMAILCONSTANT.IMAGES.logo,
             URL: global.config.EMAIL_BASE_URL + EMAILCONSTANT.WELCOME_VERIFIED.url
         }
-        console.log("Welcome mail for verification", templateData)
         readHTMLFile(path.join(__dirname, `../emailTemplates/${EMAILCONSTANT.WELCOME_VERIFIED.template}.html`), async function (err, html) {
             try {
                 const compiledTemplate = handlebars.compile(html);
@@ -181,14 +176,13 @@ exports.verifyOtp = async (req, res) => {
             email: body.email,
             token: token,
         }
-        return res.status(200).send({ status: true, message: 'OTP is verify', data: responseObj });
+        return res.status(200).send({ status: true, message: 'SUCCESS_OTP_VERIFIED', data: responseObj });
     } catch (e) {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
     }
 }
 
-// Forgot password 
 exports.forgotPassword = async (req, res) => {
     try {
 
@@ -197,7 +191,7 @@ exports.forgotPassword = async (req, res) => {
 
         let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserExists) {
-            return res.status(400).send({ status: false, message: 'Emai not found' })
+            return res.status(400).send({ status: false, message: 'Email not found' })
         }
 
         let CheckUser = await User.findOne({ where: { user_id: CheckUserExists.user_id } })
@@ -207,16 +201,13 @@ exports.forgotPassword = async (req, res) => {
 
         var otp = generateOtp(6);
 
-        // Update user details
-        var UserUpdateData = User.update({ otp: otp, otp_exp_time: moment(new Date()).add(global.config.OTP_EXPIRE_TIME, 'seconds').format('YYYY-MM-DD HH:mm:ss') }, { where: { user_id: CheckUser.user_id } });
-
-        /** read html file and send forgot password mail with OTP*/
+        var UserUpdate = User.update({ otp: otp, otp_exp_time: moment(new Date()).add(global.config.OTP_EXPIRE_TIME, 'seconds').format('YYYY-MM-DD HH:mm:ss') }, { where: { user_id: CheckUser.user_id } });
         let templateData = {
             LOGO: global.config.EMAIL_BASE_URL + EMAILCONSTANT.IMAGES.logo,
             OTP: otp,
             URL: global.config.EMAIL_BASE_URL + EMAILCONSTANT.FORGOT.url(body.email)
         }
-        if (CheckUser.status == User.Status.PENDING) {
+        if (CheckUser.status === User.Status === "active") {
             var responseData = {
                 user_id: CheckUser.user_id,
                 email: body.email,
@@ -253,15 +244,14 @@ exports.forgotPassword = async (req, res) => {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
     }
+
 }
 
-// Reset Password
 exports.resetPassword = async (req, res) => {
     try {
         let body = req.body;
         console.log(body)
 
-        //check user 
         let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserExists) {
             return res.status(400).send({ status: false, message: 'Error Email not Found' })
@@ -279,13 +269,10 @@ exports.resetPassword = async (req, res) => {
         if (moment(CheckUser.otp_exp_time) < moment(new Date())) {
             return res.status(400).send({ status: false, message: 'OTP was expired please enter valid OTP' })
         }
-
-        //* user login with social Login so dont have password /
         if (CheckUser.password == null) {
             let updatepass = await User.update({ password: encrypt(body.password) }, { where: { user_id: CheckUser.user_id } })
             return res.status(200).send({ status: true, message: 'Password successfully reset' })
         }
-        //compare password
         const isPasswordCheck = await comparePassword(body.password, CheckUser.password)
         if (isPasswordCheck) {
             return res.status(400).send({ status: false, message: 'New_Password Must be different' })
@@ -296,8 +283,8 @@ exports.resetPassword = async (req, res) => {
             otp: null,
             otp_exp_time: null
         }
-        // Update user status
-        var UserUpdateData = User.update(UserUpdate, { where: { user_id: CheckUser.user_id } });
+
+        var UserUpdate = User.update(UserUpdate, { where: { user_id: CheckUser.user_id } });
 
         const token = generateToken({ id: CheckUserExists.user_id, email: body.email })
 
@@ -314,7 +301,6 @@ exports.resetPassword = async (req, res) => {
     }
 }
 
-// Resend OTP
 exports.resendOtp = async (req, res) => {
     try {
 
@@ -336,10 +322,9 @@ exports.resendOtp = async (req, res) => {
         }
         var otp = generateOtp(6);
 
-        // Update user details
         var UserUpdateData = User.update({ otp: otp, otp_exp_time: moment(new Date()).add(global.config.OTP_EXPIRE_TIME, 'seconds').format('YYYY-MM-DD HH:mm:ss') }, { where: { user_id: CheckUser.user_id } });
 
-        /**  rend otp after SIGNUP and FORGOT*/
+
         let url
         if (body.type == 'register') {
             url = global.config.EMAIL_BASE_URL + `verify-otp/${body.email}`
@@ -347,7 +332,6 @@ exports.resendOtp = async (req, res) => {
             url = global.config.EMAIL_BASE_URL + `reset-password/${body.email}`
         }
 
-        /** resend Otp to  mail */
         let templateData = {
             LOGO: global.config.EMAIL_BASE_URL + EMAILCONSTANT.IMAGES.logo,
             OTP: otp,

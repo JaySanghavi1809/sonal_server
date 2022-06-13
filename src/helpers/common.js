@@ -16,4 +16,3 @@ exports.readHTMLFile = function (path, cb) {
     });
     // console.log(this.readHTMLFile)
 }
-

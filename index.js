@@ -3,6 +3,7 @@ const env = process.env.NODE_ENV || 'development';
 const config = require('./src/config/config.json')[env];
 const express = require('express')
 const bodyParser = require('body-parser')
+const http = require('http')
 const app = express();
 const { HandleErrorMessage } = require('./src/middleware/validatorMessageError');
 const db = require('./src/models')
@@ -32,8 +33,12 @@ app.use('/v1/private', privateRouter);
 global.config = config;
 console.log(global.config)
 
-app.listen(port, () => {
-	console.log("Server running on port" + port)
+app.use(HandleErrorMessage);
+const server = http.createServer(app)
+
+
+server.listen(global.config.PORT, () => {
+	console.log(`Server is up on port: ${global.config.PORT}`)
 })
 
 
