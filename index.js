@@ -5,14 +5,10 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const http = require('http')
 const app = express();
+const i18n = require('./src/helpers/i18n');
 const { HandleErrorMessage } = require('./src/middleware/validatorMessageError');
 const db = require('./src/models')
 const cors = require('cors')
-
-
-
-const port = process.env.PORT || 8000
-
 const { userAuth } = require('./src/middleware/auth');
 
 db.sequelize.sync({ alter: true }).then(() => {
@@ -21,8 +17,8 @@ db.sequelize.sync({ alter: true }).then(() => {
 	console.log("DB Error", error)
 	throw new Error(error)
 })
-
 app.use(cors());
+app.use(i18n.init)
 app.use('/src/uploads', express.static(__dirname + '/src/uploads'));
 app.use(bodyParser.json())
 const { publicRouter, privateRouter } = require('./src/routes/index');
@@ -31,7 +27,6 @@ const { publicRouter, privateRouter } = require('./src/routes/index');
 app.use('/v1/public', publicRouter);
 app.use('/v1/private', privateRouter);
 global.config = config;
-console.log(global.config)
 
 app.use(HandleErrorMessage);
 const server = http.createServer(app)

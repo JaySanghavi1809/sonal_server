@@ -3,7 +3,7 @@ const { Model, Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
     class User extends Model {
         static associate(models) {
-            console.log(models)
+
         }
     }
     User.init(
@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.INTEGER
             },
             otp_exp_time: {
-                type: DataTypes.TIME
+                type: DataTypes.DATE
             },
             item_profile_id: {
                 type: DataTypes.INTEGER

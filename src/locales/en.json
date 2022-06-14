@@ -1,0 +1,23 @@
+{
+    "ERROR_BODY": "Please enter all required information",
+    "ERROR_ALREADY_LOGIN": "You have already registered with the same email, please try another email",
+    "ERROR_EMAIL_ALREADY_EXIST": "A user with this email already exists please try another.",
+    "SUCCESS_VERIFICATION_MAIL_SENT": "Registration successful, please verify your account with OTP.",
+    "ERROR_USER_NOT_VERIFY": "The email you entered is not verified",
+    "ERROR_INCORRECT_PASSWORD": "Incorrect password please try again.",
+    "SUCCESS_LOGIN": "Login successfully",
+    "ERR_USER_NOT_FOUND": "User not found,please register user first",
+    "ERROR_EMAIL_NOT_EXIST": "User does not exist with this email.",
+    "ERROR_MOBILE_ALREADY_EXIST": "A user with this mobile number already exists.",
+    "ERROR_USER_ALREADY_VERIFY": "User already verified",
+    "ERROR_INVALID_OTP": "Invalid OTP",
+    "ERROR_OTP_EXPIRED": "Entered OTP has been expired.",
+    "SUCCESS_OTP_VERIFIED": "OTP verified",
+    "SUCCESS_OTP_RESEND": "Resend OTP successfully",
+    "SUCCESS_OTP_SEND": "OTP send successfully",
+    "ERROR_NEW_PASSWORD_MUST_DIFFERENT": "Please enter unique password",
+    "SUCCESS_RESET_PASSWORD": "Reset Password successfully",
+    "ERROR_TOKEN_REQUIRED": "Token required",
+    "ERROR_INVALID_TOKEN": "Invalid Token",
+    "SUCCESS_FETCHED": "Successfully Fetched"
+}

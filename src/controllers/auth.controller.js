@@ -1,6 +1,7 @@
 const moment = require('moment');
 const path = require('path')
-const handlebars = require('handlebars')
+const handlebars = require('handlebars');
+const i18n = require('i18n')
 const { User, UserMeta, UserAuth } = require('../models')
 const { encrypt, generateOtp, comparePassword } = require("../helpers/utils")
 const { readHTMLFile } = require("../helpers/common")
@@ -8,25 +9,21 @@ const { EMAILCONSTANT } = require("../helpers/constant")
 const { sendEmail } = require("../helpers/email.helper")
 const { generateToken } = require("../helpers/auth.token");
 
-
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
     try {
         var body = req.body
         if (!body) {
-            return res.status(400).send({ status: false, message: 'ERROR_BODY' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_BODY') })
         }
         // check for unique email 
         let CheckExistsUsers = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (CheckExistsUsers) {
             var UserAuth1 = await UserAuth.findOne({ where: { user_id: CheckExistsUsers.user_id } })
             if (UserAuth1) {
-                return res.status(400).send({ status: false, message: 'email already exist' })
+                return res.status(400).send({ status: false, message: res.__('ERROR_ALREADY_LOGIN') })
             }
-            return res.status(400).send({ status: false, message: 'ERROR_EMAIL_ALREADY_EXIST' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_EMAIL_ALREADY_EXIST') })
         }
-
-
-
         var otp = generateOtp(6);
         let CreateUser = {
             first_name: body.firstName,
@@ -37,7 +34,7 @@ exports.register = async (req, res) => {
         }
         let UserInfo = await User.create(CreateUser);
         if (!UserInfo) {
-            return res.status(400).send({ status: false, message: 'Something went wrong could not create user' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_USER_NOT_CREATED') })
         }
 
         var UserMetaCreate = {
@@ -46,15 +43,12 @@ exports.register = async (req, res) => {
             data: body.email
         }
         let UserMetaInfo = await UserMeta.create(UserMetaCreate)
-        console.log(UserMetaInfo)
-
         let templateData = {
             LOGO: global.config.EMAIL_BASE_URL + EMAILCONSTANT.IMAGES.logo,
             OTP: otp,
             URL: global.config.EMAIL_BASE_URL + EMAILCONSTANT.SIGNUP_OTP.url(body.email)
 
         }
-        console.log(templateData)
         readHTMLFile(path.join(__dirname, `../emailTemplates/${EMAILCONSTANT.SIGNUP_OTP.template}.html`), async function (err, html) {
             try {
                 const compiledTemplate = handlebars.compile(html);
@@ -62,52 +56,45 @@ exports.register = async (req, res) => {
                 const subject = EMAILCONSTANT.SIGNUP_OTP.subject;
                 const to = body.email;
                 sendEmail(to, subject, htmlToSend)
-                console.log("to, subject, htmlToSend", to, subject, htmlToSend)
             } catch (e) {
                 console.log("error", e)
             }
         })
 
-        return res.status(200).send({ status: true, message: 'Successfully User created, Verification Mail was sent' })
+        return res.status(200).send({ status: true, message: res.__('SUCCESS_VERIFICATION_MAIL_SENT') })
 
     } catch (e) {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
     }
 }
-
-// Login 
 exports.login = async (req, res) => {
     try {
         let body = req.body;
 
-        //check user 
         let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserExists) {
-            return res.status(400).send({ status: false, message: 'User not Found' })
+            return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
 
         let UserVerify = await User.findOne({ where: { user_id: CheckUserExists.user_id } })
         if (!UserVerify) {
-            return res.status(400).send({ status: false, message: 'User not Found, please enter valid data' });
+            return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
         if (UserVerify.password == null) {
-            return res.status(400).send({ status: false, message: 'Please enter valid password' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_LOGIN_PASSWORD') })
         }
-
-
         const VerifyPassword = await comparePassword(body.password, UserVerify.password)
         if (!VerifyPassword) {
-            return res.status(400).send({ status: false, message: 'someting went wrong ' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_INCORRECT_PASSWORD') })
         }
-
         const token = generateToken({ id: CheckUserExists.user_id, email: body.email })
 
         if (UserVerify.status !== User.Status === "active") {
             return res.status(200).send({
                 status: false,
-                message: 'User not verify ',
-                user_Verify_status: User.Status.PENDING
+                message: res.__('ERR_USER_NOT_VERIFY'),
+                user_Verify_status: User.Status === "pending"
             });
         }
         let responseObj = {
@@ -115,8 +102,7 @@ exports.login = async (req, res) => {
             email: body.email,
             token: token,
         }
-        return res.status(200).send({ status: true, message: 'Successfully User login', data: responseObj })
-
+        return res.status(200).send({ status: true, message: res.__('SUCCESS_LOGIN'), data: responseObj })
     } catch (e) {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
@@ -126,31 +112,24 @@ exports.login = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
     try {
         let body = req.body;
-        //check user 
         let CheckUserMeta = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserMeta) {
-            return res.status(400).send({ status: false, message: 'ERROR_EMAIL_NOT_EXIST' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_EMAIL_NOT_EXIST') })
         }
-
         let CheckUser = await User.findOne({ where: { user_id: CheckUserMeta.user_id } })
         if (!CheckUser) {
-            return res.status(400).send({ status: false, message: 'ERR_USER_NOT_FOUND' });
+            return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
-
-        if (body.type == 'register' && CheckUser.status === User.Status.ACTIVE) {
-            return res.status(400).send({ status: false, message: 'ERROR_USER_ALREADY_VERIFY' })
+        if (body.type == 'register' && CheckUser.status === User.Status === "active") {
+            return res.status(400).send({ status: false, message: res.__('ERROR_USER_ALREADY_VERIFY') })
         }
-
         if (CheckUser.otp != body.otp) {
-            return res.status(400).send({ status: false, message: 'ERROR_INVALID_OTP' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_INVALID_OTP') })
         }
-
         if (moment(CheckUser.otp_exp_time) < moment(new Date())) {
-            return res.status(400).send({ status: false, message: 'ERROR_OTP_EXPIRED' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_OTP_EXPIRED') })
         }
-
         var UserUpdate = User.update({ otp: null, otp_exp_time: null, status: User.Status === "active" }, { where: { user_id: CheckUser.user_id } });
-
         const token = generateToken({ id: UserUpdate.user_id, email: body.email })
 
         let templateData = {
@@ -168,39 +147,33 @@ exports.verifyOtp = async (req, res) => {
                 console.log("error", e)
             }
         })
-
-
-
         let responseObj = {
             user_id: CheckUser.user_id,
             email: body.email,
             token: token,
         }
-        return res.status(200).send({ status: true, message: 'SUCCESS_OTP_VERIFIED', data: responseObj });
+        return res.status(200).send({ status: true, message: res.__('SUCCESS_OTP_VERIFIED'), data: responseObj });
     } catch (e) {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
     }
 }
-
 exports.forgotPassword = async (req, res) => {
     try {
 
         let body = req.body;
-        console.log(body)
+        // console.log(body)
 
         let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserExists) {
-            return res.status(400).send({ status: false, message: 'Email not found' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_EMAIL_NOT_EXIST') })
         }
 
         let CheckUser = await User.findOne({ where: { user_id: CheckUserExists.user_id } })
         if (!CheckUser) {
-            return res.status(400).send({ status: false, message: 'User Not Found' });
+            return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
-
         var otp = generateOtp(6);
-
         var UserUpdate = User.update({ otp: otp, otp_exp_time: moment(new Date()).add(global.config.OTP_EXPIRE_TIME, 'seconds').format('YYYY-MM-DD HH:mm:ss') }, { where: { user_id: CheckUser.user_id } });
         let templateData = {
             LOGO: global.config.EMAIL_BASE_URL + EMAILCONSTANT.IMAGES.logo,
@@ -225,7 +198,7 @@ exports.forgotPassword = async (req, res) => {
                     console.log("error", e)
                 }
             })
-            return res.status(200).send({ status: false, message: 'User Not Verify', data: responseData })
+            return res.status(200).send({ status: false, message: res.__('ERR_USER_NOT_VERIFY'), data: responseData })
         }
         readHTMLFile(path.join(__dirname, `../emailTemplates/${EMAILCONSTANT.FORGOT.template}.html`), async function (err, html) {
             try {
@@ -239,43 +212,40 @@ exports.forgotPassword = async (req, res) => {
 
             }
         })
-        return res.status(200).send({ status: true, message: 'Successfully OTP Send' })
+        return res.status(200).send({ status: true, message: res.__('SUCCESS_OTP_SEND') })
     } catch (e) {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
     }
 
 }
-
 exports.resetPassword = async (req, res) => {
     try {
         let body = req.body;
-        console.log(body)
+        // console.log(body)
 
         let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserExists) {
-            return res.status(400).send({ status: false, message: 'Error Email not Found' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_EMAIL_NOT_EXIST') })
         }
-
         let CheckUser = await User.findOne({ where: { user_id: CheckUserExists.user_id } })
         if (!CheckUser) {
-            return res.status(400).send({ status: false, message: 'User not found' });
+            return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
-
         if (CheckUser.otp != body.otp) {
-            return res.status(400).send({ status: false, message: "Please enter valid OTP" })
+            return res.status(400).send({ status: false, message: res.__('ERROR_INVALID_OTP') })
         }
 
         if (moment(CheckUser.otp_exp_time) < moment(new Date())) {
-            return res.status(400).send({ status: false, message: 'OTP was expired please enter valid OTP' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_OTP_EXPIRED') })
         }
         if (CheckUser.password == null) {
             let updatepass = await User.update({ password: encrypt(body.password) }, { where: { user_id: CheckUser.user_id } })
-            return res.status(200).send({ status: true, message: 'Password successfully reset' })
+            return res.status(200).send({ status: true, message: res.__('SUCCESS_RESET_PASSWORD') })
         }
         const isPasswordCheck = await comparePassword(body.password, CheckUser.password)
         if (isPasswordCheck) {
-            return res.status(400).send({ status: false, message: 'New_Password Must be different' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_NEW_PASSWORD_MUST_DIFFERENT') })
         }
 
         var UserUpdate = {
@@ -294,36 +264,32 @@ exports.resetPassword = async (req, res) => {
             token: token
         }
 
-        return res.status(200).send({ status: true, message: 'Password successfully reset', data: responseData })
+        return res.status(200).send({ status: true, message: res.__('SUCCESS_RESET_PASSWORD'), data: responseData })
     } catch (e) {
         console.log('Exception', e);
         return res.send({ status: false, message: e.message })
     }
 }
-
 exports.resendOtp = async (req, res) => {
     try {
 
         let body = req.body;
-        console.log(body)
-
-        //check user 
+        // console.log(body)
         let CheckUserExists = await UserMeta.findOne({ where: { type: 'email', data: body.email } })
         if (!CheckUserExists) {
-            return res.status(400).send({ status: false, message: 'Email is not found' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_EMAIL_NOT_EXIST') })
         }
         let CheckUser = await User.findOne({ where: { user_id: CheckUserExists.user_id } })
         if (!CheckUser) {
-            return res.status(400).send({ status: false, message: 'User not found' });
+            return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
 
         if (body.type == 'register' && CheckUser.status === User.Status.ACTIVE) {
-            return res.status(400).send({ status: false, message: 'User is already verify' })
+            return res.status(400).send({ status: false, message: res.__('ERROR_USER_ALREADY_VERIFY') })
         }
         var otp = generateOtp(6);
 
         var UserUpdateData = User.update({ otp: otp, otp_exp_time: moment(new Date()).add(global.config.OTP_EXPIRE_TIME, 'seconds').format('YYYY-MM-DD HH:mm:ss') }, { where: { user_id: CheckUser.user_id } });
-
 
         let url
         if (body.type == 'register') {
@@ -348,11 +314,10 @@ exports.resendOtp = async (req, res) => {
                 console.log("error", e)
             }
         })
-
         if (body.type === 'resend') {
-            return res.status(200).send({ status: true, message: 'successfully OTP Reset' })
+            return res.status(200).send({ status: true, message: res.__('SUCCESS_OTP_RESEND') })
         } else {
-            return res.status(200).send({ status: true, message: 'successfully OTP sent' })
+            return res.status(200).send({ status: true, message: res.__('SUCCESS_OTP_SEND') })
         }
     } catch (e) {
         console.log('Exception', e);

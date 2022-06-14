@@ -1,10 +1,11 @@
-const { celebrate, Joi, Segments } = require('celebrate');
+const { celebrate, joi, Segments } = require('celebrate')
+const Joi = require('joi')
 const { User, UserAuth, UserMeta } = require('../models')
 
 module.exports = {
   register: () => celebrate({
     [Segments.BODY]: Joi.object().keys({
-      firstName: Joi.string().required(),
+      firstName: Joi.string().required().allow(null),
       lastName: Joi.string().required(),
       email: Joi.string().email().required(),
       password: Joi.string().required()
@@ -13,7 +14,7 @@ module.exports = {
   login: () => celebrate({
     [Segments.BODY]: Joi.object().keys({
       email: Joi.string().email().required(),
-      password: Joi.string().required(),
+      password: Joi.string().required()
     }),
   }),
   verifyOtp: () => celebrate({
@@ -31,7 +32,7 @@ module.exports = {
   resetPassword: () => celebrate({
     [Segments.BODY]: Joi.object().keys({
       email: Joi.string().email().required(),
-      otp: Joi.required(),
+      otp: Joi.string().required(),
       password: Joi.string().required()
     }),
   }),
@@ -47,4 +48,4 @@ module.exports = {
       new_password: Joi.string().required(),
     }),
   }),
-}
+};
