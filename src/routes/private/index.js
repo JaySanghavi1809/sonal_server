@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-// const userRouter = require("./user.route");
-// router.use("/user", userRouter);
+
+const categoryRoute = require("./meta-category.route");
+router.use("/category", categoryRoute);
 
 module.exports = router;

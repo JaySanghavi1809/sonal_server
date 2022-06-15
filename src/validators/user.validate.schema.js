@@ -1,6 +1,6 @@
 const { celebrate, joi, Segments } = require('celebrate')
 const Joi = require('joi')
-const { User, UserAuth, UserMeta } = require('../models')
+// const { User, UserAuth, UserMeta } = require('../models')
 
 module.exports = {
   register: () => celebrate({

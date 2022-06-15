@@ -1,9 +1,9 @@
-const { isCelebrateError } = require('celebrate');
+const { Error } = require('joi');
 
 const HandleErrorMessage = async (err, req, res, next) => {
 
     try {
-        if (isCelebrateError(err)) {
+        if (Error(err)) {
             let errorFieldBody;
             if (err.details.get('body')) {
                 errorFieldBody = err.details.get('body');
@@ -20,3 +20,8 @@ const HandleErrorMessage = async (err, req, res, next) => {
 }
 
 module.exports = { HandleErrorMessage }
+
+
+
+
+
