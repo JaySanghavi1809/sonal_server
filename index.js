@@ -23,7 +23,8 @@ app.use('/src/uploads', express.static(__dirname + '/src/uploads'));
 app.use(bodyParser.json())
 const { publicRouter, privateRouter } = require('./src/routes/index');
 
-
+// const { userAuth } = require('./src/middleware/auth')
+app.all('/v1/private/*', userAuth);
 app.use('/v1/public', publicRouter);
 app.use('/v1/private', privateRouter);
 global.config = config;

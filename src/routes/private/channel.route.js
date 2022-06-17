@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const channel_controller = require('../../controllers/channel.controller');
-// const postValidator = require('../../validators/post.schema');
+// const ChannelSchema = require('../../validators/channel.schema');
 
 router.post('/createChannel', channel_controller.CreateChannel)
-router.post('/createTemplate', channel_controller.CreateTemplate)
 
-router.put('/UpdateChannel', channel_controller.UpdateChannel)
+router.get('/get_template', channel_controller.GetTemplate)
+
+router.put('/channelExist', channel_controller.CheckChannelFound)
+
+
 
 module.exports = router;
