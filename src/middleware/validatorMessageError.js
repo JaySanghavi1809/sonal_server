@@ -1,9 +1,10 @@
-const { Error } = require('joi');
+const { isCelebrateError } = require('celebrate');
 
 const HandleErrorMessage = async (err, req, res, next) => {
 
     try {
-        if (Error(err)) {
+        console.log(err)
+        if (isCelebrateError(err)) {
             let errorFieldBody;
             if (err.details.get('body')) {
                 errorFieldBody = err.details.get('body');
@@ -15,6 +16,7 @@ const HandleErrorMessage = async (err, req, res, next) => {
             return res.status(400).send({ status: false, message: errorFieldBody.details[0].message });
         }
     } catch (e) {
+        console.log("e", e)
         return res.status(400).send({ status: false, message: e.message })
     }
 }

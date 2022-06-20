@@ -7,7 +7,7 @@ exports.CreateChannel = async (req, res) => {
         if (!CheckUser) {
             return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
-        let CheckChannel = await UserChannel.findOne({ where: { channel_name: body.channel_name, user_id: FindUser.user_id } })
+        let CheckChannel = await UserChannel.findOne({ where: { channel_name: body.channel_name, user_id: CheckUser.user_id } })
         if (CheckChannel) {
             return res.status(400).send({ status: false, message: res.__('ERR_CHANNEL_EXIST') });
         }
@@ -17,9 +17,9 @@ exports.CreateChannel = async (req, res) => {
             return res.status(400).send({ status: false, message: res.__('ERR_TEMPLATE_NOT_EXIST') });
         }
 
-        let UpdateChannelName = await UserChannel.findOne({ where: { user_id: FindUser.user_id } })
+        let UpdateChannelName = await UserChannel.findOne({ where: { user_id: CheckUser.user_id } })
         if (UpdateChannelName) {
-            let updateChannel = await UserChannel.update({ channel_name: body.channel_name, template_id: body.template_id }, { where: { user_id: FindUser.user_id } })
+            let updateChannel = await UserChannel.update({ channel_name: body.channel_name, template_id: body.template_id }, { where: { user_id: CheckUser.user_id } })
             return res.status(200).send({
                 status: true,
                 message: res.__('CREATE_CHANNEL'),
@@ -33,7 +33,7 @@ exports.CreateChannel = async (req, res) => {
         }
 
         let CreateNewChannel = await UserChannel.create({
-            user_id: req.body.user_id,
+            user_id: req.user.user_id,
             channel_name: req.body.channel_name,
             Template_id: req.body.Template_id,
             status: "active"
@@ -83,7 +83,8 @@ exports.CheckChannelFound = async (req, res) => {
         if (!CheckChannel) {
             return res.status(400).send({ status: false, message: res.__('ERR_USER_NOT_FOUND') });
         }
-        let ChannelName = await UserChannel.findOne({ where: { channel_name: body.channel_name, user_id: FindUser.user_id } })
+
+        let ChannelName = await UserChannel.findOne({ where: { channel_name: body.channel_name, user_id: CheckChannel.user_id } })
         if (ChannelName) {
             return res.status(400).send({ status: false, message: res.__('ERR_CHANNEL_EXIST') });
         }

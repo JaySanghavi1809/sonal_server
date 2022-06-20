@@ -48,4 +48,9 @@ module.exports = {
       new_password: Joi.string().required(),
     }),
   }),
+  GetAllUser: () => celebrate({
+    [Segments.QUERY]: Joi.object().keys({
+      user_id: Joi.number().integer().required(),
+    }),
+  }),
 };

@@ -1,1 +1,22 @@
-{}
+{
+	"SUCCESS_VERIFICATION_MAIL_SENT": "successfully vefification mail sent",
+	"SUCCESS_LOGIN": "successfully user login",
+	"SUCCESS_OTP_VERIFIED": "successfully otp verify",
+	"SUCCESS_OTP_SEND": "successfully otp sent",
+	"ERROR_NEW_PASSWORD_MUST_DIFFERENT": "password must be unique",
+	"SUCCESS_RESET_PASSWORD": "successfully reset password",
+	"ERROR_INVALID_OTP": "invalid otp ",
+	"ERROR_INCORRECT_PASSWORD": "enter correct password",
+	"ERROR_EMAIL_ALREADY_EXIST": "email already exists",
+	"ERR_CHANNEL_EXIST": "channel already exists",
+	"CREATE_CHANNEL": "Create channel",
+	"SUCCESS_FETCHED": "Get all channel",
+	"SUCCESS_CHANNEL": "Update channel",
+	"CATEGORY_CREATED_SUCCESS": "successfully category created",
+	"GET_ALL_CATEGORY": "get all category",
+	"FETCHED_CATEGORY": "Successfully fetched category",
+	"DELETED_CATEGORY": "successfully deleted category",
+	"UPDATE_CATEGORY": "Successfully updated category",
+	"CHANNEL_CREATED_SUCCESS": "CHANNEL_CREATED_SUCCESS",
+	"ERR_USER_NOT_FOUND": "User not found"
+}

@@ -130,6 +130,7 @@ exports.verifyOtp = async (req, res) => {
             return res.status(400).send({ status: false, message: res.__('ERROR_OTP_EXPIRED') })
         }
         var UserUpdate = User.update({ otp: null, otp_exp_time: null, status: User.Status === "active" }, { where: { user_id: CheckUser.user_id } });
+
         const token = generateToken({ id: UserUpdate.user_id, email: body.email })
 
         let templateData = {
@@ -239,10 +240,7 @@ exports.resetPassword = async (req, res) => {
         if (moment(CheckUser.otp_exp_time) < moment(new Date())) {
             return res.status(400).send({ status: false, message: res.__('ERROR_OTP_EXPIRED') })
         }
-        if (CheckUser.password == null) {
-            let updatepass = await User.update({ password: encrypt(body.password) }, { where: { user_id: CheckUser.user_id } })
-            return res.status(200).send({ status: true, message: res.__('SUCCESS_RESET_PASSWORD') })
-        }
+
         const isPasswordCheck = await comparePassword(body.password, CheckUser.password)
         if (isPasswordCheck) {
             return res.status(400).send({ status: false, message: res.__('ERROR_NEW_PASSWORD_MUST_DIFFERENT') })
